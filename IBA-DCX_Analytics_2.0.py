@@ -163,6 +163,8 @@ TRANSLATIONS = {
         {"English": "Network Analysis", "Español": "Análisis de Red"},
     "Topic Modeling":
         {"English": "Topic Modeling", "Español": "Modelado de Temas"},
+    "Points":
+        {"English": "Points", "Español": "Puntos"},
     "Customer Satisfaction Analysis":
         {"English": "Customer Satisfaction Analysis", "Español": "Análisis de Satisfacción del Cliente"},
     "✅ Please select a feature":
@@ -827,7 +829,7 @@ def render_sentiment_dashboard(df, store, classifier):
         st.markdown(f"""
         <div style="{box_style_total}">
             <div style="font-size:18px; font-weight:bold;">{T("Current Store")}</div>
-            <div style="font-size:36px; font-weight:bold; color:#2b8a3e;">{store_total:.2f}점</div>
+            <div style="font-size:36px; font-weight:bold; color:#2b8a3e;">{store_total:.2f} Points</div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -835,7 +837,7 @@ def render_sentiment_dashboard(df, store, classifier):
         st.markdown(f"""
         <div style="{box_style_total}">
             <div style="font-size:18px; font-weight:bold;">{region_name} {T("Average")}</div>
-            <div style="font-size:36px; font-weight:bold; color:#1c7ed6;">{region_total:.2f}점</div>
+            <div style="font-size:36px; font-weight:bold; color:#1c7ed6;">{region_total:.2f} Points</div>
             <div style="font-size:16px; color:{trend_color}; margin-top:5px;">{trend_text}</div>
         </div>
         """, unsafe_allow_html=True)
