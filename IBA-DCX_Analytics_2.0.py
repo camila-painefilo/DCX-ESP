@@ -170,7 +170,7 @@ TRANSLATIONS = {
     "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.":
         {"English": "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.",
          "Español": "⚠️ Selecciona primero la región y el negocio y luego pulsa 'Confirmar' para activar las funciones."},
-})
+}
 
     # Add more keys/phrases below as you translate your UI!
 def T(key):
