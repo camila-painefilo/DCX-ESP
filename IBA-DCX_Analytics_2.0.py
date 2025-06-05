@@ -1,3 +1,4 @@
+# --- [All original imports] ---
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -62,14 +63,19 @@ TRANSLATIONS = {
         "English": "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.",
         "Español": "⚠️ Por favor selecciona primero la región y el negocio, luego presiona 'Confirmar' para activar las funciones."
     },
-    # Add more translations as needed...
+    "No data to show.": {
+        "English": "No data to show.",
+        "Español": "No hay datos para mostrar."
+    }
+    # ...add more as needed
 }
 
 def T(key):
-    """Returns the translation for the current language."""
     return TRANSLATIONS.get(key, {}).get(lang, key)
 
-# --- Styles ---
+# [Rest of your code: Styles, dataset mappings, model helpers etc...]
+
+# [Style & environment]
 st.markdown("""
 <style>
 body, .stApp { background-color: white !important; color: black !important; }
@@ -95,7 +101,6 @@ mpl.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = font_name
 plt.rcParams['axes.unicode_minus'] = False
 
-# Dataset mapping
 KEYWORD_COLUMNS_KO = ['맛', '서비스', '가격', '위치', '분위기', '위생']
 KEYWORD_COLUMNS_EN = ['Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Hygiene']
 KEYWORD_ENGLISH_MAP = dict(zip(KEYWORD_COLUMNS_KO, KEYWORD_COLUMNS_EN))
@@ -161,7 +166,7 @@ if not st.session_state['location_locked']:
 else:
     location = st.session_state.get('selected_location')
     store = st.session_state.get('selected_store')
-    st.sidebar.markdown(f"🔒 {T('Region')}: {location}\n\n🔒 {T('Store')}: {store}")
+    st.sidebar.markdown(f"🔒 Región: {location}\n\n🔒 Negocio: {store}")
     df = load_dataset(DATASET_MAP[location])
 
 # --- Info (English/Spanish) ---
@@ -257,8 +262,8 @@ else:
     selected_tab = T("How to Use")
     st.warning(T("⚠️ Please select the region and store first, then press 'Confirm' to activate the functions."))
 
-# ---- ANALYSIS MODULES (Show translated text by lang) ----
-def render_usage_tab():
+# ---- ANALYSIS MODULES: must all take lang as a parameter! ----
+def render_usage_tab(lang):
     st.header(T("How to Use"))
     if lang == "Español":
         st.markdown("""
@@ -327,22 +332,47 @@ def render_usage_tab():
         </div>
         """, unsafe_allow_html=True)
 
-# ---- (You can add similar Spanish/English branches for each analysis function, using lang == "Español") ----
-# ---- For brevity, keep all analysis tabs unchanged, but wrap all text with T() or lang == "Español" checks ----
+def render_review_tab(df, store, lang):
+    st.header(f"{T('Photos & Reviews')} - {store}")
+    filtered = df[df["Name"] == store]
+    if filtered.empty:
+        st.info(T("No data to show."))
+    else:
+        for idx, row in filtered.iterrows():
+            st.subheader(f"{T('Photos & Reviews')} #{idx+1}")
+            st.write(row["Content"])
 
-# e.g. for rendering tab:
-if selected_tab == T("How to Use"):
-    render_usage_tab()
-elif selected_tab == T("Photos & Reviews"):
-    render_review_tab(df, store, lang)
-elif selected_tab == T("Word Cloud"):
-    render_wordcloud_tab(df, store, lang)
-elif selected_tab == T("Treemap"):
-    render_treemap_tab(df, store, lang)
-elif selected_tab == T("Network Analysis"):
-    render_network_tab(df, store, lang)
-elif selected_tab == T("Topic Modeling"):
-    render_topic_tab(df, store, lang)
-elif selected_tab == T("Customer Satisfaction Analysis"):
-    classifier = get_classifier()
-    render_sentiment_dashboard(df, store, classifier, lang)
+def render_wordcloud_tab(df, store, lang):
+    st.header(f"{T('Word Cloud')} - {store}")
+    filtered = df[df["Name"] == store]
+    all_tokens = " ".join(filtered["Tokens"].dropna().astype(str))
+    if not all_tokens:
+        st.info(T("No data to show."))
+    else:
+        wc = WordCloud(width=600, height=400, background_color="white").generate(all_tokens)
+        fig, ax = plt.subplots()
+        ax.imshow(wc, interpolation='bilinear')
+        ax.axis("off")
+        st.pyplot(fig)
+
+def render_treemap_tab(df, store, lang):
+    st.header(f"{T('Treemap')} - {store}")
+    filtered = df[df["Name"] == store]
+    all_tokens = " ".join(filtered["Tokens"].dropna().astype(str)).split()
+    if not all_tokens:
+        st.info(T("No data to show."))
+    else:
+        counter = Counter(all_tokens)
+        words, counts = zip(*counter.most_common(10))
+        fig = plt.figure(figsize=(7, 4))
+        squarify.plot(sizes=counts, label=words, alpha=.8)
+        plt.axis('off')
+        st.pyplot(fig)
+
+def render_network_tab(df, store, lang):
+    st.header(f"{T('Network Analysis')} - {store}")
+    filtered = df[df["Name"] == store]
+    all_tokens = [x.split() for x in filtered["Tokens"].dropna().astype(str)]
+    word_pairs = []
+    for tokens in all_tokens:
+       
