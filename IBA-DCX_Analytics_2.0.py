@@ -176,6 +176,36 @@ TRANSLATIONS = {
 def T(key):
     return TRANSLATIONS.get(key, {}).get(lang, key)
 
+region_avg_scores = {
+    'Pusan National University': {
+        'total': 89.05,
+        'Taste': 90.12,
+        'Service': 87.86,
+        'Price': 87.02,
+        'Location': 81.43,
+        'Atmosphere': 88.63,
+        'Hygiene': 89.17
+    },
+    'Kyung Hee University': {
+        'total': 88.87,
+        'Taste': 91.05,
+        'Service': 87.88,
+        'Price': 86.01,
+        'Location': 78.23,
+        'Atmosphere': 85.76,
+        'Hygiene': 89.53
+    },
+    'Jeju Island': {
+        'total': 88.53,
+        'Taste': 88.92,
+        'Service': 88.00,
+        'Price': 81.22,
+        'Location': 81.47,
+        'Atmosphere': 85.09,
+        'Hygiene': 89.87
+    }
+}
+
 # Force Light Mode
 st.markdown("""
 <style>
