@@ -876,8 +876,8 @@ def render_sentiment_dashboard(df, store, classifier):
                 st.markdown(f"""
                     <div style="{box_style}">
                         <div style="font-size:18px; font-weight:bold">{keyword}</div>
-                        <div style="font-size:28px; color:{color}">{store_score:.2f}{T('Points')} {trend}</div>
-                        <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T('Points')}</div>
+                        <div style="font-size:28px; color:{color}">{store_score:.2f}{T(' Points')} {trend}</div>
+                        <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T(' Points')}</div>
                     </div>
                 """, unsafe_allow_html=True)
        
