@@ -941,8 +941,8 @@ def render_sentiment_dashboard(df, store, classifier):
         else:
             st.info(T("Click the button above to start the analysis."))
             return
-       
-# Visualize results
+
+    # Visualize results
 region_name = st.session_state.get('selected_location', '')
 region_stats = region_avg_scores.get(region_name, {})
 sentiment_data = st.session_state[sentiment_key]
@@ -1033,6 +1033,10 @@ for idx, keyword in enumerate(KEYWORD_COLUMNS_EN):
                     <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T('Points')}</div>
                 </div>
             """, unsafe_allow_html=True)
+       
+###############################################
+# UI
+
 # Sidebar
 st.sidebar.image("DCX_Tool.png", use_container_width=True)
 st.sidebar.title(T("Select Region and Store"))
