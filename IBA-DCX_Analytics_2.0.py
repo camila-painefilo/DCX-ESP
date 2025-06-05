@@ -1,4 +1,3 @@
-# --- [All original imports] ---
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -15,6 +14,10 @@ import itertools
 import gc
 import networkx as nx
 import squarify
+import urllib.request
+import datetime
+import pytz
+import uuid
 from collections import Counter, defaultdict
 from wordcloud import WordCloud
 from transformers import pipeline
@@ -22,60 +25,158 @@ from gensim import corpora
 from gensim.models import LdaModel
 import pyLDAvis.gensim as gensimvis
 import pyLDAvis
+import altair as alt
+import gspread
+from random import choice
+from google.oauth2.service_account import Credentials
 
-# --- Language Toggle ---
-st.set_page_config(page_title="IBA DCX Tool", layout="wide")
+# --- Bilingual UI Setup ---
 lang = st.sidebar.selectbox("🌐 Language / Idioma", ["English", "Español"], key="lang")
 
-# --- Translations Dictionary ---
 TRANSLATIONS = {
+    "The maximum number of users has been reached. Estimated waiting time: {m}분":
+        {"English": "The maximum number of users has been reached. Estimated waiting time: {m} min",
+         "Español": "Se alcanzó el número máximo de usuarios. Tiempo estimado de espera: {m} min"},
+    "⏰ Your session time has ended. Please reconnect.":
+        {"English": "⏰ Your session time has ended. Please reconnect.",
+         "Español": "⏰ Tu sesión ha terminado. Por favor vuelve a conectarte."},
+    "⏳ Your expiration time: {expiration_str}":
+        {"English": "⏳ Your expiration time: {expiration_str}",
+         "Español": "⏳ Tu sesión expira: {expiration_str}"},
+    "✅ Finish the session":
+        {"English": "✅ Finish the session", "Español": "✅ Finalizar sesión"},
+    "✅ The session has ended.":
+        {"English": "✅ The session has ended.", "Español": "✅ La sesión ha terminado."},
+    "📊 IBA-DCX Tool":
+        {"English": "📊 IBA-DCX Tool", "Español": "📊 Herramienta IBA-DCX"},
     "How to Use": {"English": "How to Use", "Español": "Cómo usar"},
-    "Photos & Reviews": {"English": "Photos & Reviews", "Español": "Fotos y Reseñas"},
-    "Word Cloud": {"English": "Word Cloud", "Español": "Nube de Palabras"},
-    "Treemap": {"English": "Treemap", "Español": "Mapa de árbol"},
+     "Review Summary and Images":
+        {"English": "Review Summary and Images", "Español": "Resumen de Reseñas e Imágenes"},
+    "Review Indicators":
+        {"English": "Review Indicators", "Español": "Indicadores de Reseñas"},
+    "Total number of Reviews":
+        {"English": "Total number of Reviews", "Español": "Total de Reseñas"},
+    "Total number of Images":
+        {"English": "Total number of Images", "Español": "Total de Imágenes"},
+    "Average Review Length":
+        {"English": "Average Review Length", "Español": "Longitud Promedio de Reseña"},
+    "Top Reviews 🖼️":
+        {"English": "Top Reviews 🖼️", "Español": "Reseñas Destacadas 🖼️"},
+    "🔄 Look at other reviews":
+        {"English": "🔄 Look at other reviews", "Español": "🔄 Ver otras reseñas"},
+    "Wordcloud":
+        {"English": "Wordcloud", "Español": "Nube de Palabras"},
+    "No text available":
+        {"English": "No text available", "Español": "No hay texto disponible"},
+    "Treemap":
+        {"English": "Treemap", "Español": "Treemap"},
+    "No text available for {column}":
+        {"English": "No text available for {column}", "Español": "No hay texto disponible para {column}"},
+    "Color Descriptions":
+        {"English": "Color Descriptions", "Español": "Descripción de los Colores"},
     "Network Analysis": {"English": "Network Analysis", "Español": "Análisis de Red"},
+    "Insufficient reviews to perform network analysis.":
+        {"English": "Insufficient reviews to perform network analysis.", "Español": "No hay suficientes reseñas para realizar el análisis de red."},
+    "Setting the Word Filter Criteria":
+        {"English": "Setting the Word Filter Criteria", "Español": "Configurar el filtro de palabras"},
+    "Minimum word frequency":
+        {"English": "Minimum word frequency", "Español": "Frecuencia mínima de palabra"},
+    "No matching network found with current filter criteria.":
+        {"English": "No matching network found with current filter criteria.", "Español": "No se encontró una red con los criterios de filtro actuales."},
+    "Color Criteria":
+        {"English": "Color Criteria", "Español": "Criterios de color"},
+    "High Frequency words 30%":
+        {"English": "High Frequency words 30%", "Español": "Palabras de alta frecuencia 30%"},
+    "Low Frequency words 30%":
+        {"English": "Low Frequency words 30%", "Español": "Palabras de baja frecuencia 30%"},
+    "Medium Frequency words":
+        {"English": "Medium Frequency words", "Español": "Palabras de frecuencia media"},
     "Topic Modeling": {"English": "Topic Modeling", "Español": "Modelado de Temas"},
-    "Customer Satisfaction Analysis": {
-        "English": "Customer Satisfaction Analysis", 
-        "Español": "Análisis de Satisfacción del Cliente"
-    },
-    "Select Region and Store": {
-        "English": "Select Region and Store",
-        "Español": "Selecciona Región y Negocio"
-    },
-    "Please select a region": {
-        "English": "Please select a region",
-        "Español": "Selecciona una región"
-    },
-    "Please select a store": {
-        "English": "Please select a store",
-        "Español": "Selecciona un negocio"
-    },
-    "Region/Store Selection Finalized": {
-        "English": "Region/Store Selection Finalized",
-        "Español": "Región/Negocio seleccionado"
-    },
-    "Please select a feature": {
-        "English": "Please select a feature",
-        "Español": "Selecciona una función"
-    },
-    "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.": {
-        "English": "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.",
-        "Español": "⚠️ Por favor selecciona primero la región y el negocio, luego presiona 'Confirmar' para activar las funciones."
-    },
-    "No data to show.": {
-        "English": "No data to show.",
-        "Español": "No hay datos para mostrar."
-    }
-    # ...add more as needed
-}
+    "Not enough reviews to run topic modeling.":
+        {"English": "Not enough reviews to run topic modeling.", "Español": "No hay suficientes reseñas para ejecutar el modelado de temas."},
+    "Execute Topic Modeling":
+        {"English": "Execute Topic Modeling", "Español": "Ejecutar Modelado de Temas"},
+    "Download LDA Result HTML":
+        {"English": "📁 Download LDA Result HTML", "Español": "📁 Descargar HTML de resultados LDA"},
+    "Customer Satisfaction Analysis":
+        {"English": "Customer Satisfaction Analysis", "Español": "Análisis de Satisfacción del Cliente"},
+    "Insufficient reviews to perform sentiment analysis.":
+        {"English": "Insufficient reviews to perform sentiment analysis.", "Español": "No hay suficientes reseñas para realizar el análisis de sentimiento."},
+    "🧠 Start Customer Satisfaction Analysis":
+        {"English": "🧠 Start Customer Satisfaction Analysis", "Español": "🧠 Iniciar análisis de satisfacción del cliente"},
+    "Click the button above to start the analysis.":
+        {"English": "Click the button above to start the analysis.", "Español": "Haz clic en el botón de arriba para iniciar el análisis."},
+    "🔎 Overall Sentiment Score Comparison":
+        {"English": "🔎 Overall Sentiment Score Comparison", "Español": "🔎 Comparación General de Sentimiento"},
+    "Current Store":
+        {"English": "Current Store", "Español": "Negocio Actual"},
+    "Average":
+        {"English": "Average", "Español": "Promedio"},
+    "points difference":
+        {"English": "points difference", "Español": "puntos de diferencia"},
+    "Keyword Sentiment Score Comparison":
+        {"English": "Keyword Sentiment Score Comparison", "Español": "Comparación de Sentimiento por Palabra Clave"},
+    "Insufficient reviews for analysis":
+        {"English": "Insufficient reviews for analysis", "Español": "No hay suficientes reseñas para el análisis"},
+    "Points":
+        {"English": "Points", "Español": "Puntos"},
+    "Regional Average":
+        {"English": "Regional Average", "Español": "Promedio Regional"},
+        "Select Region and Store":
+        {"English": "Select Region and Store", "Español": "Selecciona Región y Negocio"},
+    "Please select a region":
+        {"English": "Please select a region", "Español": "Selecciona una región"},
+    "Please select a store":
+        {"English": "Please select a store", "Español": "Selecciona un negocio"},
+    "✅Region/Store Selection Finalized":
+        {"English": "✅Region/Store Selection Finalized", "Español": "✅Región/Negocio Seleccionado"},
+    "Region":
+        {"English": "Region", "Español": "Región"},
+    "Store":
+        {"English": "Store", "Español": "Negocio"},
+    "This DCX analysis tool is only permitted for use in the following cases:":
+        {"English": "This DCX analysis tool is only permitted for use in the following cases:",
+         "Español": "Esta herramienta de análisis DCX solo se permite usar en los siguientes casos:"},
+    "* When used in educational settings such as universities for student education and research":
+        {"English": "* When used in educational settings such as universities for student education and research",
+         "Español": "* Cuando se utiliza en entornos educativos como universidades para la educación e investigación estudiantil"},
+    "* When used by small business owners for their own business purposes":
+        {"English": "* When used by small business owners for their own business purposes",
+         "Español": "* Cuando la utilizan pequeños empresarios para sus propios fines comerciales"},
+    "* When used by university or graduate students as part of nonprofit community service activities to provide business strategies to local small business owners":
+        {"English": "* When used by university or graduate students as part of nonprofit community service activities to provide business strategies to local small business owners",
+         "Español": "* Cuando estudiantes universitarios o de posgrado la usan como parte de actividades de servicio comunitario sin fines de lucro para proveer estrategias a pequeños negocios locales"},
+    "Except for the cases above, any commercial use of this analysis tool and reuse of the analysis data is strictly prohibited.":
+        {"English": "Except for the cases above, any commercial use of this analysis tool and reuse of the analysis data is strictly prohibited.",
+         "Español": "Excepto en los casos anteriores, cualquier uso comercial de esta herramienta y reutilización de los datos está estrictamente prohibido."},
+    "Inquiries & Information":
+        {"English": "Inquiries & Information", "Español": "Consultas & Información"},
+    "Contact via Email":
+        {"English": "Contact via Email", "Español": "Contacto por Email"},
+    "IBA LAB Homepage":
+        {"English": "IBA LAB Homepage", "Español": "Página IBA LAB"},
+    "Photos & Reviews":
+        {"English": "Photos & Reviews", "Español": "Fotos y Reseñas"},
+    "Word Cloud":
+        {"English": "Word Cloud", "Español": "Nube de Palabras"},
+    "Network Analysis":
+        {"English": "Network Analysis", "Español": "Análisis de Red"},
+    "Topic Modeling":
+        {"English": "Topic Modeling", "Español": "Modelado de Temas"},
+    "Customer Satisfaction Analysis":
+        {"English": "Customer Satisfaction Analysis", "Español": "Análisis de Satisfacción del Cliente"},
+    "✅ Please select a feature":
+        {"English": "✅ Please select a feature", "Español": "✅ Selecciona una función"},
+    "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.":
+        {"English": "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.",
+         "Español": "⚠️ Selecciona primero la región y el negocio y luego pulsa 'Confirmar' para activar las funciones."},
+})
 
+    # Add more keys/phrases below as you translate your UI!
 def T(key):
     return TRANSLATIONS.get(key, {}).get(lang, key)
 
-# [Rest of your code: Styles, dataset mappings, model helpers etc...]
-
-# [Style & environment]
+# Force Light Mode
 st.markdown("""
 <style>
 body, .stApp { background-color: white !important; color: black !important; }
@@ -84,11 +185,10 @@ body, .stApp { background-color: white !important; color: black !important; }
     color: black !important;
 }
 .markdown-text-container { color: black !important; }
-label[for^=""] { color: black !important; font-weight: 600; }
-div[data-testid="stMarkdownContainer"] p { color: black !important; }
 </style>
 """, unsafe_allow_html=True)
 
+# Global settings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["STREAMLIT_WATCHER_TYPE"] = "none"
 
@@ -101,6 +201,11 @@ mpl.rcParams['axes.unicode_minus'] = False
 plt.rcParams['font.family'] = font_name
 plt.rcParams['axes.unicode_minus'] = False
 
+MAX_USERS = 2  # Maximum simultaneous users
+TIMEOUT_MINUTES = 15  # Session timeout (minutes)
+TIMEZONE = pytz.timezone('Asia/Seoul')
+
+# Dataset mapping
 KEYWORD_COLUMNS_KO = ['맛', '서비스', '가격', '위치', '분위기', '위생']
 KEYWORD_COLUMNS_EN = ['Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Hygiene']
 KEYWORD_ENGLISH_MAP = dict(zip(KEYWORD_COLUMNS_KO, KEYWORD_COLUMNS_EN))
@@ -109,11 +214,16 @@ DATASET_MAP = {
     'Kyung Hee University': 'IBA-DCX_Analytics_2.0_KHU.csv',
     'Jeju Island': 'IBA-DCX_Analytics_2.0_Jeju.csv'
 }
+
+# Location English Mapping
 LOCATION_ENGLISH_MAP = {
     'Pusan National University': 'Pusan National University',
     'Kyung Hee University': 'Kyung Hee University',
     'Jeju Island': 'Jeju Island'
 }
+
+###############################################
+# Resource management
 
 @st.cache_resource
 def get_classifier():
@@ -133,6 +243,7 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
         gdown.download(f'https://drive.google.com/uc?id={file_id}', output, quiet=True)
     use_cols = ['Name', 'Content', 'Tokens', 'Image_Links'] + KEYWORD_COLUMNS_KO + ['review_sentences', 'Date']
     df = pd.read_csv(output, usecols=use_cols)
+    # Rename Korean columns to English
     df = df.rename(columns=KEYWORD_ENGLISH_MAP)
     return df
 
@@ -144,7 +255,755 @@ def train_lda_model(corpus, _dictionary, num_topics=10):
 def get_lda_vis_data(_model, corpus, _dictionary):
     return gensimvis.prepare(_model, corpus, _dictionary)
 
-# -- SIDEBAR (with language support) --
+###############################################
+
+# Google Sheets setup
+SPREADSHEET_ID = "16ZU-AypnTli-BlXa2Tgvooe4YKsd0T1NqC3nZWsig_E"
+SHEET_NAME = "DCX"
+TIMEZONE = pytz.timezone('Asia/Seoul')
+
+# Google Sheets queue setup
+@st.cache_resource
+def get_worksheet():
+    creds = Credentials.from_service_account_info(
+        st.secrets["gcp_service_account"],
+        scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    )
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(SPREADSHEET_ID)
+    return sheet.worksheet(SHEET_NAME)
+
+def load_queue(force_reload=False):
+    if not force_reload:
+        if st.session_state.get('queue_checked', False):
+            return []
+    ws = get_worksheet()
+    return ws.get_all_records()
+
+def save_queue(data):
+    ws = get_worksheet()
+    if not data:
+        num_rows = len(ws.get_all_values())
+        if num_rows > 1:
+            ws.delete_rows(2, num_rows)
+        ws.update('A1:B1', [["user_id", "start_time"]])
+    else:
+        update_data = [["user_id", "start_time"]] + [[row['user_id'], row['start_time']] for row in data]
+        num_rows = len(ws.get_all_values())
+        if num_rows > 1:
+            ws.delete_rows(2, num_rows)
+        end_row = len(update_data)
+        ws.update(f"A1:B{end_row}", update_data)
+
+def clean_expired_sessions():
+    ws = get_worksheet()
+    all_values = ws.get_all_values()
+    now = datetime.datetime.now(tz=TIMEZONE)
+    valid_rows = []
+    for row in all_values[1:]:
+        if not row or len(row) < 2:
+            continue
+
+        user_id, start_time_str = row[0], row[1]
+
+        if not start_time_str.strip():
+            continue
+
+        try:
+            start_time_naive = datetime.datetime.strptime(start_time_str, "%Y-%m-%d %H:%M:%S")
+            start_time = TIMEZONE.localize(start_time_naive)
+            if (now - start_time).total_seconds() <= TIMEOUT_MINUTES * 60:
+                valid_rows.append([user_id, start_time_str])
+        except Exception:
+            continue
+
+    final_data = [["user_id", "start_time"]] + valid_rows
+
+    ws.clear()
+    time.sleep(1)
+    ws.update(range_name='A1:B' + str(len(final_data)), values=final_data)
+    time.sleep(1)
+
+    st.cache_data.clear()
+
+query_params = st.query_params
+user_id = query_params.get('user_id')
+
+if user_id is None:
+    user_id = str(uuid.uuid4())[:8]
+    st.query_params["user_id"] = user_id
+
+if 'user_id' not in st.session_state:
+    query_params = st.query_params
+    if 'user_id' in query_params:
+        st.session_state['user_id'] = query_params['user_id']
+    else:
+        new_user_id = str(uuid.uuid4())[:8]
+        st.query_params["user_id"] = new_user_id
+        st.session_state['user_id'] = new_user_id
+
+if 'queue_checked' not in st.session_state:
+    clean_expired_sessions()
+    time.sleep(3)
+
+    data = load_queue(force_reload=True)
+    now = datetime.datetime.now(tz=TIMEZONE)
+    user_ids = [row['user_id'] for row in data]
+
+    if st.session_state['user_id'] not in user_ids:
+        if len(user_ids) < MAX_USERS:
+            ws = get_worksheet()
+            ws.append_row([st.session_state['user_id'], now.strftime("%Y-%m-%d %H:%M:%S")])
+            st.session_state['queue_checked'] = True
+            st.session_state['start_time'] = now
+            st.cache_data.clear()
+        else:
+            wait_sec = (len(user_ids) - MAX_USERS + 1) * TIMEOUT_MINUTES * 60
+            m, s = divmod(wait_sec, 60)
+            st.error(T("The maximum number of users has been reached. Estimated waiting time: {m}분").format(m=m))
+            st.stop()
+    else:
+        st.session_state['queue_checked'] = True
+
+# Check session timeout
+expiration_time = st.session_state['start_time'] + datetime.timedelta(minutes=TIMEOUT_MINUTES)
+now = datetime.datetime.now(tz=TIMEZONE)
+
+if now >= expiration_time:
+    data = load_queue(force_reload=True)
+    new_data = [row for row in data if row['user_id'] != st.session_state.get('user_id')]
+    save_queue(new_data)
+    st.cache_data.clear()
+
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+    st.sidebar.warning(T("⏰ Your session time has ended. Please reconnect."))
+    st.stop()
+
+else:
+    expiration_str = expiration_time.strftime("%Y-%m-%d %H:%M:%S")
+    st.sidebar.success(T("⏳ Your expiration time: {expiration_str}").format(expiration_str=expiration_str))
+
+if st.sidebar.button(T("✅ Finish the session")):
+    user_id = st.session_state.get('user_id')
+
+    ws = get_worksheet()
+    all_values = ws.get_all_values()
+
+    target_row = None
+    for idx, row in enumerate(all_values[1:], start=2):
+        if row and row[0] == user_id:
+            target_row = idx
+            break
+
+    if target_row:
+        ws.delete_rows(target_row)
+        time.sleep(2)
+        st.cache_data.clear()
+
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+
+    st.success(T("✅ The session has ended."))
+    st.stop()
+
+###############################################
+# Functions
+
+def compute_sentiment(text, classifier):
+    if not isinstance(text, str):
+        text = str(text)
+    result = classifier(text)
+    return result[0]['score'] if result[0]['label'] == 'LABEL_1' else 1 - result[0]['score']
+
+def render_title(location, store):
+    st.title(f"{location} - {store}")
+
+def clean_memory(keys):
+    for key in keys:
+        if key in st.session_state:
+            del st.session_state[key]
+    plt.clf()
+    plt.close('all')
+    gc.collect()
+
+def clean_tokens(text):
+    text = re.sub(r"[^\w\s]", "", text)  # Remove commas, periods, etc.
+    return text.split()
+
+# Stopwords definition (unchanged)
+stopwords = {
+    # Particles / Pronouns / Demonstratives
+    '이', '그', '저', '것', '거', '곳', '수', '좀', '처럼', '까지', '에도', '에도요', '이나', '라도',
+
+    # Conjunctions / Connectors
+    '그리고', '그래서', '그러나', '하지만', '또한', '즉', '결국', '때문에', '그래도',
+
+    # Predicates / Endings / Auxiliary verbs
+    '합니다', '해요', '했어요', '하네요', '하시네요', '하시던데요', '같아요', '있어요', '없어요',
+    '되네요', '되었어요', '보여요', '느껴져요', '하겠습니다', '되겠습니다', '있습니다', '없습니다',
+    '합니다', '이에요', '이라', '해서',
+
+    # Interjections / Review-specific expressions
+    'ㅎㅎ', 'ㅋㅋ', 'ㅠㅠ', '^^', '^^;;', '~', '~~', '!!!', '??', '!?', '?!', '...', '!!', '~!!', '~^^!!',
+
+    # Emphasis expressions
+    '아주', '정말', '진짜', '엄청', '매우', '완전', '너무', '굉장히', '많이', '많아요', '적당히', '넘',
+
+    # Others
+    '정도', '느낌', '같은', '니당', '네요', '있네요', '이네요', '이라서',
+    '해서요', '보니까', '봤어요', '먹었어요', '마셨어요', '갔어요', '봤습니다', '하는', '하게', '드네', '또시',
+    '이랑', '하고', '해도', '해도요', '때문에요', '이나요', '정도에요'
+}
+
+###############################################
+# Modules
+
+# Usage
+def render_usage_tab():
+    st.header(T("📊 IBA-DCX Tool"))
+
+    if lang == "Español":
+        st.markdown("""
+        <div style="background-color: #f5f8fa; padding: 20px; border-radius: 12px; border-left: 6px solid #0d6efd;">
+            <p style="font-size:16px;">
+            <strong>IBA DCX Tool</strong> es una herramienta que apoya el establecimiento de estrategias de gestión basadas en la experiencia del cliente a través del análisis de reseñas online.<br>
+            Puedes realizar las siguientes funciones con esta herramienta.
+            </p>
+            <ul style="padding-left: 20px; font-size:15px; line-height: 1.6;">
+                <li>Generación de Nube de Palabras</li>
+                <li>Creación de Gráficos Treemap</li>
+                <li>Análisis de Red por Frecuencia</li>
+                <li>Modelado de Temas LDA</li>
+                <li>Análisis de Satisfacción del Cliente vía Análisis de Sentimiento</li>
+            </ul>
+        </div>
+        <br>
+        <br>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### ✅ Cómo usar")
+        st.markdown("""
+        <div style="padding: 16px; background-color: #f9f9f9; border-radius: 10px; font-size: 15px; line-height: 1.7;">
+            <ol>
+                <li>En la <strong>barra lateral</strong>, selecciona una <span style="color:#0d6efd;">ubicación</span> y <span style="color:#0d6efd;">nombre del negocio</span>, luego haz clic en el botón <strong>‘Confirmar’</strong>.</li>
+                <li>Elige la función de análisis deseada del <strong>menú desplegable</strong>.</li>
+                <li>Para comenzar un nuevo análisis, <strong>actualiza la página</strong> y comienza de nuevo.</li>
+                <li><strong>El análisis de sentimiento</strong> puede demorar más dependiendo del número de reseñas.</li>
+                <li>Esta herramienta está diseñada para <strong>modo claro</strong>. Puedes cambiar el tema desde el menú (⋮) en la esquina superior derecha.</li>
+            </ol>
+            <p style="font-size:14px; color:gray;">
+            ⚠️ Si tienes problemas, contacta al correo en la barra lateral.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background-color: #f5f8fa; padding: 20px; border-radius: 12px; border-left: 6px solid #0d6efd;">
+            <p style="font-size:16px;">
+            <strong>IBA DCX Tool</strong> is a tool that supports <strong>customer experience-based management strategy establishment</strong> through <strong>online review analysis</strong>.<br>
+            You can perform the following functions with this tool.
+            </p>
+            <ul style="padding-left: 20px; font-size:15px; line-height: 1.6;">
+                <li>Word Cloud Generation</li>
+                <li>Treemap Chart Creation</li>
+                <li>Frequency-Based Network Analysis</li>
+                <li>LDA Topic Modeling</li>
+                <li>Customer Satisfaction Analysis via Sentiment Analysis</li>
+            </ul>
+        </div>
+        <br>
+        <br>
+        """, unsafe_allow_html=True)
+
+        st.markdown("### ✅ How to Use")
+
+        st.markdown("""
+        <div style="padding: 16px; background-color: #f9f9f9; border-radius: 10px; font-size: 15px; line-height: 1.7;">
+            <ol>
+                <li>In the <strong>sidebar</strong>, select a <span style="color:#0d6efd;">location</span> and <span style="color:#0d6efd;">store name</span>, then click the <strong>‘Confirm’</strong> button.</li>
+                <li>Choose the desired analysis function from the <strong>function selection dropdown</strong>.</li>
+                <li>To start a new analysis, <strong>refresh the page</strong> and begin again.</li>
+                <li><strong>Sentiment analysis</strong> may take longer depending on the number of reviews.</li>
+                <li>This tool is designed for <strong>Light Mode</strong>. You can change the theme via the menu (⋮) in the top-right corner.</li>
+            </ol>
+            <p style="font-size:14px; color:gray;">
+            ⚠️ If you encounter issues, please contact the email address provided in the sidebar.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Review loading
+def render_review_tab(df, store):
+    st.header(f"{st.session_state.get('selected_location', '')} - {store}: {T('Review Summary and Images')}")
+    df_store = df[df['Name'] == store]
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(clean_tokens)
+    image_links = df_store['Image_Links'].tolist()
+    reviews = df_store['Content'].fillna('').astype(str).tolist()
+    image_pattern = r'https?://[\S]+\.(?:jpg|jpeg|png|gif)'
+    all_links, all_reviews = [], []
+    for idx, link_str in enumerate(image_links):
+        if isinstance(link_str, str):
+            links = re.findall(image_pattern, link_str)
+            all_links.extend(links)
+            all_reviews.extend([reviews[idx]] * len(links))
+
+    avg_length = np.mean([len(r) for r in reviews if isinstance(r, str)]) if reviews else 0
+    st.markdown(f"### 📊 {T('Review Indicators')}")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(T("Total number of Reviews"), f"{len(df_store)} reviews")
+    with col2:
+        st.metric(T("Total number of Images"), f"{len(all_links)} images")
+    with col3:
+        st.metric(T("Average Review Length"), f"{avg_length:.1f}")
+    highlight_keywords = KEYWORD_COLUMNS_EN
+    def highlight_keywords_in_text(text):
+        for kw in highlight_keywords:
+            text = re.sub(f"({kw})", r"<span style='color:#d9480f; font-weight:bold;'>\1</span>", text)
+        return text
+
+    st.markdown(f"### {T('Top Reviews 🖼️')}")
+    NUM_CARDS = 6
+    if 'review_indices' not in st.session_state:
+        st.session_state.review_indices = random.sample(range(len(all_links)), min(NUM_CARDS, len(all_links)))
+    if st.button(T("🔄 Look at other reviews")):
+        st.session_state.review_indices = random.sample(range(len(all_links)), min(NUM_CARDS, len(all_links)))
+    for row_start in range(0, len(st.session_state.review_indices), 3):
+        row_cols = st.columns(3)
+        for i in range(3):
+            if row_start + i >= len(st.session_state.review_indices):
+                break
+            idx = st.session_state.review_indices[row_start + i]
+            with row_cols[i]:
+                st.markdown(f"""
+                <div style="height: 180px; overflow: hidden; border-radius: 8px;">
+                    <img src="{all_links[idx]}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" />
+                </div>
+                """, unsafe_allow_html=True)
+
+                highlighted = highlight_keywords_in_text(all_reviews[idx])
+                st.markdown(f"""
+                <div style="padding:12px; background-color:#f9f9f9; border-radius:10px;
+                            box-shadow:0 2px 4px rgba(0,0,0,0.08); margin-top:8px;
+                            height:150px; overflow:auto;">
+                    <p style="font-size:14px; color:#333;">{highlighted}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+# Wordcloud
+# Define vivid color list
+VIVID_COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#e31a1c", "#17becf"]
+
+# Random color function
+def vivid_color_func(*args, **kwargs):
+    return choice(VIVID_COLORS)
+
+# Wordcloud tab rendering function
+def render_wordcloud_tab(df, store):
+    st.header(f"{st.session_state.get('selected_location', '')} - {store}: {T('Wordcloud')}")
+    df_store = df[df['Name'] == store]
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(clean_tokens)
+
+    columns_to_plot = ['Content'] + KEYWORD_COLUMNS_EN
+
+    container = st.container()
+    cols = container.columns(3)
+
+    for idx, column in enumerate(columns_to_plot):
+        col = cols[idx % 3]
+        text = ' '.join(df_store[column].dropna().map(str))
+        tokens = text.split()
+        filtered_tokens = [t for t in tokens if t not in stopwords]
+        filtered_text = ' '.join(filtered_tokens)
+
+        with col:
+            st.markdown(
+                f"<div style='text-align:center; font-weight:bold; font-size:16px; margin-bottom:5px;'>{column}</div>",
+                unsafe_allow_html=True
+            )
+
+            if filtered_text.strip():
+                wordcloud = WordCloud(
+                    font_path=FONT_PATH,
+                    width=800,
+                    height=800,
+                    contour_width=1.8,
+                    contour_color='black',
+                    background_color='white',
+                    mode='RGB',
+                    color_func=vivid_color_func,
+                    collocations=False
+                ).generate(filtered_text)
+
+                fig, ax = plt.subplots(figsize=(5, 5), dpi=150)
+                ax.imshow(wordcloud, interpolation='nearest')
+                ax.axis('off')
+                st.pyplot(fig)
+                plt.close(fig)
+            else:
+                st.markdown(f"""
+                <div style="padding:10px; text-align:center; background-color:#f9f9f9;
+                            border-radius:10px; min-height:200px; height:260px;
+                            display:flex; align-items:center; justify-content:center;">
+                    <span style="color:gray;">{T('No text available')}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+# Treemap
+def render_treemap_tab(df, store):
+    st.header(f"{st.session_state.get('selected_location', '')} - {store}: {T('Treemap')}")
+    df_store = df[df['Name'] == store]
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(clean_tokens)
+
+    columns_to_plot = ['Content'] + KEYWORD_COLUMNS_EN
+    container = st.container()
+    cols = container.columns(3)
+
+    for idx, column in enumerate(columns_to_plot):
+        col = cols[idx % 3]
+        text = ' '.join(df_store[column].dropna().map(str))
+
+        tokens = text.split()
+        filtered_tokens = [t for t in tokens if t not in stopwords]
+        word_count = Counter(filtered_tokens)
+
+        with col:
+            st.markdown(f"<div style='text-align:center; font-weight:bold; font-size:16px; margin-bottom:5px;'>{column}</div>", unsafe_allow_html=True)
+
+            if filtered_tokens and len(word_count) > 0:
+                most_common = word_count.most_common(10)
+                sizes = [count for _, count in most_common]
+                labels = [f"{word} ({count})" for word, count in most_common]
+
+                cmap = plt.cm.get_cmap("Blues")
+                normed_sizes = [s / max(sizes) for s in sizes]
+                colors = [cmap(0.3 + 0.7 * s) for s in normed_sizes]
+
+                fig, ax = plt.subplots(figsize=(4, 4))
+                squarify.plot(sizes=sizes, label=labels, color=colors, alpha=0.85, ax=ax, text_kwargs={'fontsize':10})
+                ax.axis('off')
+                st.pyplot(fig)
+                plt.close(fig)
+            else:
+                st.markdown(f"""
+                <div style="padding:20px; text-align:center; background-color:#f9f9f9;
+                            border-radius:10px; min-height:260px;
+                            display:flex; align-items:center; justify-content:center;
+                            box-shadow:0px 1px 3px rgba(0,0,0,0.05);">
+                    <span style="color:gray; font-size:16px;">{T('No text available for {column}').format(column=column)}</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+    with st.expander(f"📘 {T('Color Descriptions')}"):
+        if lang == "Español":
+            st.markdown("""
+            - El **color del treemap representa la frecuencia relativa** de la palabra.
+            - **Azul oscuro** indica una palabra mencionada más frecuentemente.
+            - **Colores claros** representan palabras con menor frecuencia.
+            """)
+        else:
+            st.markdown("""
+            - The **color of the treemap represents the relative frequency** of the word.  
+            - **Dark blue** indicates a more frequently mentioned word.  
+            - **Light colors** represent words with lower frequency.
+            """)
+
+# Network analysis
+def render_network_tab(df, store):
+    st.header(f"{st.session_state.get('selected_location', '')} - {store}: {T('Network Analysis')}")
+    df_store = df[df['Name'] == store]
+
+    if len(df_store) < 20:
+        st.warning(T("Insufficient reviews to perform network analysis."))
+        return
+
+    def clean_tokens(text):
+        text = re.sub(r"[^\w\s]", "", text)
+        return text.split()
+    
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(clean_tokens)
+
+    st.subheader(T("Setting the Word Filter Criteria"))
+    total_reviews = len(df_store)
+    min_value = max(1, total_reviews // 20)
+    max_value = max(2, total_reviews // 10)
+    default_value = (min_value + max_value) // 2
+
+    min_freq = st.slider(
+        T("Minimum word frequency"),
+        min_value=min_value,
+        max_value=max_value,
+        value=default_value
+    )
+
+    word_freq = Counter(itertools.chain(*df_store['Tokens']))
+    filtered_words = {w for w, c in word_freq.items() if c >= min_freq}
+
+    df_store['Filtered_Tokens'] = df_store['Tokens'].apply(
+        lambda tokens: [w for w in tokens if w in filtered_words and w not in stopwords and len(w) > 1]
+    )
+
+    co_occurrence = defaultdict(int)
+    for tokens in df_store['Filtered_Tokens']:
+        for pair in itertools.combinations(set(tokens), 2):
+            co_occurrence[tuple(sorted(pair))] += 1
+
+    G = nx.Graph()
+    for (w1, w2), freq in co_occurrence.items():
+        G.add_edge(w1, w2, weight=freq)
+
+    G.remove_nodes_from(list(nx.isolates(G)))
+
+    if G.number_of_nodes() == 0:
+        st.warning(T("No matching network found with current filter criteria."))
+        return
+
+    pos = nx.spring_layout(G, k=0.5, seed=42)
+    degree_centrality = nx.degree_centrality(G)
+
+    freq_dict = {node: word_freq.get(node, 0) for node in G.nodes()}
+    freq_values = list(freq_dict.values())
+    upper_thresh = np.percentile(freq_values, 70)
+    lower_thresh = np.percentile(freq_values, 30)
+
+    def get_color(freq):
+        if freq >= upper_thresh:
+            return 'green'
+        elif freq <= lower_thresh:
+            return 'crimson'
+        else:
+            return 'skyblue'
+
+    node_colors = [get_color(freq_dict[n]) for n in G.nodes()]
+
+    fig, ax = plt.subplots(figsize=(8, 7))
+    fig.subplots_adjust(top=0.88, bottom=0.15)
+    node_sizes = [1000 + len(n) * 250 for n in G.nodes()]
+    
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=node_sizes, ax=ax)
+    nx.draw_networkx_edges(G, pos, edge_color='lightgray', ax=ax, alpha=0.5)
+    nx.draw_networkx_labels(G, pos, font_size=12, font_family=font_prop.get_name(), ax=ax)
+    
+    ax.set_title(f"{store} - {T('Network Analysis')}", fontproperties=font_prop, fontsize=16, pad=12)
+    ax.axis('off')
+    st.pyplot(fig)
+    plt.close(fig)
+
+    with st.expander(f"🌈 {T('Color Criteria')}"):
+        if lang == "Español":
+            st.markdown(f"""
+            - 🟢 **Verde**: {T("High Frequency words 30%")}
+            - 🔴 **Rojo**: {T("Low Frequency words 30%")}
+            - 🔵 **Azul**: {T("Medium Frequency words")}
+            """)
+        else:
+            st.markdown(f"""
+            - 🟢 **Green**: {T("High Frequency words 30%")}  
+            - 🔴 **Red**: {T("Low Frequency words 30%")}  
+            - 🔵 **Blue**: {T("Medium Frequency words")}
+            """)
+
+# Topic modeling
+def render_topic_tab(df, store):
+    st.header(f"{st.session_state.get('selected_location', '')} - {store}: {T('Topic Modeling')}")
+    df_store = df[df['Name'] == store]
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(clean_tokens)
+    if len(df_store) < 50:
+        st.warning(T("Not enough reviews to run topic modeling."))
+        return
+
+    df_store['Tokens'] = df_store['Tokens'].fillna('').map(str).map(str.split)
+    if len(df_store) > 300:
+        df_store = df_store.sample(300, random_state=42)
+
+    dictionary = corpora.Dictionary(df_store['Tokens'])
+    corpus = [dictionary.doc2bow(text) for text in df_store['Tokens']]
+
+    if st.button(T("Execute Topic Modeling")):
+        lda_model = train_lda_model(corpus, dictionary)
+        vis_data = get_lda_vis_data(lda_model, corpus, dictionary)
+        with tempfile.NamedTemporaryFile("w+", delete=False, suffix=".html") as f:
+            pyLDAvis.save_html(vis_data, f.name)
+            html_path = f.name
+        with open(html_path, "r", encoding="utf-8") as f:
+            html_content = f.read()
+        b64 = base64.b64encode(html_content.encode()).decode()
+        st.markdown(f'<a href="data:text/html;base64,{b64}" download="lda_result.html">{T("Download LDA Result HTML")}</a>', unsafe_allow_html=True)
+        del lda_model, vis_data, corpus, dictionary
+        gc.collect()
+
+# Sentiment analysis
+def render_sentiment_dashboard(df, store, classifier):
+    region_avg_scores = {
+        'Pusan National University': {
+            'total': 89.05,
+            'Taste': 90.12,
+            'Service': 87.86,
+            'Price': 87.02,
+            'Location': 81.43,
+            'Atmosphere': 88.63,
+            'Hygiene': 89.17
+        },
+        'Kyung Hee University': {
+            'total': 88.87,
+            'Taste': 91.05,
+            'Service': 87.88,
+            'Price': 86.01,
+            'Location': 78.23,
+            'Atmosphere': 85.76,
+            'Hygiene': 89.53
+        },
+        'Jeju Island': {
+            'total': 88.53,
+            'Taste': 88.92,
+            'Service': 88.00,
+            'Price': 81.22,
+            'Location': 81.47,
+            'Atmosphere': 85.09,
+            'Hygiene': 89.87
+        }
+    }
+    st.header(f"{LOCATION_ENGLISH_MAP.get(st.session_state.get('selected_location', ''))} - {store}: {T('Customer Satisfaction Analysis')}")
+    df_store = df[df['Name'] == store]
+
+    if len(df_store) < 50:
+        st.warning(T("Insufficient reviews to perform sentiment analysis."))
+        return
+
+    sentiment_key = f"sentiment_scores_{store}"
+
+    if sentiment_key not in st.session_state:
+        if st.button(T("🧠 Start Customer Satisfaction Analysis")):
+            texts = df_store['review_sentences'].dropna().astype(str).tolist()
+            keyword_inputs = {col: df_store[col].dropna().astype(str).tolist() for col in KEYWORD_COLUMNS_EN}
+            total_steps = len(texts) + sum(len(v) for v in keyword_inputs.values())
+            completed_steps = 0
+            progress_bar = st.progress(0)
+
+            total_scores = []
+            for text in texts:
+                result = classifier(text)[0]
+                score = result['score'] if result['label'] == 'LABEL_1' else 1 - result['score']
+                total_scores.append(score)
+                completed_steps += 1
+                progress_bar.progress(completed_steps / total_steps)
+
+            keyword_scores = {}
+            for col, col_texts in keyword_inputs.items():
+                if col_texts:
+                    scores = []
+                    for text in col_texts:
+                        result = classifier(text)[0]
+                        score = result['score'] if result['label'] == 'LABEL_1' else 1 - result['score']
+                        scores.append(score)
+                        completed_steps += 1
+                        progress_bar.progress(completed_steps / total_steps)
+                    keyword_scores[col] = np.mean(scores) * 100
+                else:
+                    keyword_scores[col] = None
+
+            st.session_state[sentiment_key] = {
+                'total': np.mean(total_scores) * 100,
+                'keywords': keyword_scores
+            }
+        else:
+            st.info(T("Click the button above to start the analysis."))
+            return
+       
+# Visualize results
+region_name = st.session_state.get('selected_location', '')
+region_stats = region_avg_scores.get(region_name, {})
+sentiment_data = st.session_state[sentiment_key]
+
+# Overall score comparison
+st.subheader(T("🔎 Overall Sentiment Score Comparison"))
+
+store_total = sentiment_data['total']
+region_total = region_stats.get('total', None)
+
+if region_total is not None:
+    diff = store_total - region_total
+    trend_icon = "▲" if diff > 0 else ("▼" if diff < 0 else "▶")
+    trend_color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
+    trend_text = f"{trend_icon} {abs(diff):.2f} {T('points difference')}"
+else:
+    trend_text = "-"
+    trend_color = "gray"
+
+col1, col2 = st.columns(2)
+
+box_style_total = """
+    padding: 20px;
+    border-radius: 15px;
+    background-color: #f5f5f5;
+    text-align: center;
+    box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+    min-height: 170px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+"""
+
+with col1:
+    st.markdown(f"""
+    <div style="{box_style_total}">
+        <div style="font-size:18px; font-weight:bold;">{T("Current Store")}</div>
+        <div style="font-size:36px; font-weight:bold; color:#2b8a3e;">{store_total:.2f}점</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div style="{box_style_total}">
+        <div style="font-size:18px; font-weight:bold;">{region_name} {T("Average")}</div>
+        <div style="font-size:36px; font-weight:bold; color:#1c7ed6;">{region_total:.2f}점</div>
+        <div style="font-size:16px; color:{trend_color}; margin-top:5px;">{trend_text}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.subheader(f"🔎 {T('Keyword Sentiment Score Comparison')}")
+keyword_data = sentiment_data["keywords"]
+cols = st.columns(3)
+
+for idx, keyword in enumerate(KEYWORD_COLUMNS_EN):
+    with cols[idx % 3]:
+        store_score = keyword_data.get(keyword)
+        region_score = region_stats.get(keyword)
+
+        box_style = """
+            padding: 15px;
+            border-radius: 10px;
+            background-color: whitesmoke;
+            text-align: center;
+            box-shadow: 0px 1px 3px rgba(0,0,0,0.05);
+            min-height: 130px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        """
+
+        if store_score is None:
+            st.markdown(f"""
+                <div style="{box_style}">
+                    <div style="font-size:18px; font-weight:bold">{keyword}</div>
+                    <div style="font-size:16px; color:gray; margin-top:12px;">{T('Insufficient reviews for analysis')}</div>
+                </div>
+            """, unsafe_allow_html=True)
+        else:
+            diff = store_score - region_score if region_score else 0
+            trend = "▲" if diff > 0 else ("▼" if diff < 0 else "-")
+            color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
+
+            st.markdown(f"""
+                <div style="{box_style}">
+                    <div style="font-size:18px; font-weight:bold">{keyword}</div>
+                    <div style="font-size:28px; color:{color}">{store_score:.2f}{T('Points')} {trend}</div>
+                    <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T('Points')}</div>
+                </div>
+            """, unsafe_allow_html=True)
+# Sidebar
 st.sidebar.image("DCX_Tool.png", use_container_width=True)
 st.sidebar.title(T("Select Region and Store"))
 
@@ -157,7 +1016,7 @@ if not st.session_state['location_locked']:
         df = load_dataset(DATASET_MAP[location])
         stores = df['Name'].value_counts().index.tolist()
         store = st.sidebar.selectbox(T("Please select a store"), [''] + stores, key="store")
-        if store and st.sidebar.button(T("Region/Store Selection Finalized")):
+        if store and st.sidebar.button(T("✅Region/Store Selection Finalized")):
             st.session_state.update({
                 'location_locked': True,
                 'selected_location': location,
@@ -166,39 +1025,38 @@ if not st.session_state['location_locked']:
 else:
     location = st.session_state.get('selected_location')
     store = st.session_state.get('selected_store')
-    st.sidebar.markdown(f"🔒 Región: {location}\n\n🔒 Negocio: {store}")
+    st.sidebar.markdown(f"🔒 {T('Region')}: {location}\n\n🔒 {T('Store')}: {store}")
     df = load_dataset(DATASET_MAP[location])
 
-# --- Info (English/Spanish) ---
+# Usage rules (bilingual markdown)
 if lang == "Español":
-    st.sidebar.markdown("""
-    ## **Esta herramienta DCX solo está permitida para:**
-    * Usos educativos en universidades o para investigación
-    * Dueños de pequeños negocios para sus propios negocios
-    * Actividades sin fines de lucro lideradas por estudiantes universitarios
-
+    st.sidebar.markdown(f"""
+    ## **{T('This DCX analysis tool is only permitted for use in the following cases:')}**
+    {T('* When used in educational settings such as universities for student education and research')}
+    {T('* When used by small business owners for their own business purposes')}
+    {T('* When used by university or graduate students as part of nonprofit community service activities to provide business strategies to local small business owners')}
     <span style="color:red; font-weight:bold">
-    Cualquier otro uso comercial o reutilización de los datos está estrictamente prohibido.
+    {T('Except for the cases above, any commercial use of this analysis tool and reuse of the analysis data is strictly prohibited.')}
     </span>
-    <br><br>
+    <br><br><br>
     """, unsafe_allow_html=True)
 else:
-    st.sidebar.markdown("""
-    ## **This DCX analysis tool is only permitted for use in the following cases:**
-    * When used in educational settings such as universities for student education and research
-    * When used by small business owners for their own business purposes
-    * When used by university or graduate students as part of nonprofit community service activities to provide business strategies to local small business owners
-
+    st.sidebar.markdown(f"""
+    ## **{T('This DCX analysis tool is only permitted for use in the following cases:')}**
+    {T('* When used in educational settings such as universities for student education and research')}
+    {T('* When used by small business owners for their own business purposes')}
+    {T('* When used by university or graduate students as part of nonprofit community service activities to provide business strategies to local small business owners')}
     <span style="color:red; font-weight:bold">
-    Except for the cases above, any commercial use of this analysis tool and reuse of the analysis data is strictly prohibited.
+    {T('Except for the cases above, any commercial use of this analysis tool and reuse of the analysis data is strictly prohibited.')}
     </span>
-    <br><br>
+    <br><br><br>
     """, unsafe_allow_html=True)
 
-st.sidebar.markdown("""
+st.sidebar.markdown(f"""
 <div style="text-align:center; font-size:16px; font-weight:bold; margin-bottom:10px;">
-📬 Inquiries & Information / Consultas e Información
+📬 {T("Inquiries & Information")}
 </div>
+
 <a href="mailto:peter@pusan.ac.kr">
     <button style="
         background-color:#f59f00;
@@ -210,9 +1068,10 @@ st.sidebar.markdown("""
         width:100%;
         margin-bottom:8px;
         cursor:pointer;">
-        📧 Contact / Contacto
+        📧 {T("Contact via Email")}
     </button>
 </a>
+
 <a href="https://ibalab.quv.kr/" target="_blank">
     <button style="
         background-color:#1c7ed6;
@@ -223,35 +1082,53 @@ st.sidebar.markdown("""
         font-size:14px;
         width:100%;
         cursor:pointer;">
-        🌐 IBA LAB Homepage
+        🌐 {T("IBA LAB Homepage")}
     </button>
 </a>
 """, unsafe_allow_html=True)
 
-# --- TABS (translated) ---
+# Tab setup (all bilingual)
 TABS = [
     T("How to Use"),
     T("Photos & Reviews"),
-    T("Word Cloud"),
+    T("WordCloud"),
     T("Treemap"),
     T("Network Analysis"),
     T("Topic Modeling"),
     T("Customer Satisfaction Analysis")
 ]
+
 if 'current_tab' not in st.session_state:
     st.session_state['current_tab'] = T("How to Use")
 
+# Force color for selectbox label and warning text
+st.markdown("""
+<style>
+label[for^=""] {
+    color: black !important;
+    font-weight: 600;
+}
+div[data-testid="stMarkdownContainer"] p {
+    color: black !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
 if st.session_state.get("location_locked", False):
-    selected_tab = st.selectbox("✅ " + T("Please select a feature"), TABS)
+    selected_tab = st.selectbox(T("✅ Please select a feature"), TABS)
     if st.session_state['current_tab'] != selected_tab:
         keys_to_clear = [
             key for key in st.session_state.keys()
             if key not in (
                 'selected_location', 
                 'selected_store', 
-                'location_locked'
+                'location_locked', 
+                'user_id', 
+                'queue_checked', 
+                'start_time'
             )
         ]
+
         for k in keys_to_clear:
             del st.session_state[k]
         plt.clf()
@@ -262,117 +1139,23 @@ else:
     selected_tab = T("How to Use")
     st.warning(T("⚠️ Please select the region and store first, then press 'Confirm' to activate the functions."))
 
-# ---- ANALYSIS MODULES: must all take lang as a parameter! ----
-def render_usage_tab(lang):
-    st.header(T("How to Use"))
-    if lang == "Español":
-        st.markdown("""
-        <div style="background-color: #f5f8fa; padding: 20px; border-radius: 12px; border-left: 6px solid #0d6efd;">
-        <p style="font-size:16px;">
-        <strong>IBA DCX Tool</strong> es una herramienta que ayuda a establecer estrategias de gestión basadas en la experiencia del cliente mediante el análisis de reseñas online.<br>
-        Puedes hacer lo siguiente con esta herramienta:
-        </p>
-        <ul style="padding-left: 20px; font-size:15px; line-height: 1.6;">
-            <li>Generar nubes de palabras</li>
-            <li>Crear gráficos treemap</li>
-            <li>Análisis de red por frecuencia</li>
-            <li>Modelado de temas (LDA)</li>
-            <li>Análisis de satisfacción del cliente (sentimiento)</li>
-        </ul>
-        </div>
-        <br>
-        <br>
-        """, unsafe_allow_html=True)
-        st.markdown("""
-        ### ✅ ¿Cómo usar?
-        <div style="padding: 16px; background-color: #f9f9f9; border-radius: 10px; font-size: 15px; line-height: 1.7;">
-            <ol>
-                <li>En la <strong>barra lateral</strong>, selecciona una <span style="color:#0d6efd;">región</span> y <span style="color:#0d6efd;">negocio</span>, luego pulsa <strong>'Confirmar'</strong>.</li>
-                <li>Selecciona la función que deseas en el <strong>menú desplegable</strong>.</li>
-                <li>Para comenzar de nuevo, <strong>recarga la página</strong>.</li>
-                <li>El análisis de sentimiento puede tardar más según el número de reseñas.</li>
-                <li>Esta herramienta está diseñada para <strong>modo claro</strong>.</li>
-            </ol>
-            <p style="font-size:14px; color:gray;">
-            ⚠️ Si tienes problemas, por favor contacta al email de la barra lateral.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.markdown("""
-        <div style="background-color: #f5f8fa; padding: 20px; border-radius: 12px; border-left: 6px solid #0d6efd;">
-        <p style="font-size:16px;">
-        <strong>IBA DCX Tool</strong> is a tool that supports customer experience-based management strategy establishment through online review analysis.<br>
-        You can perform the following functions with this tool.
-        </p>
-        <ul style="padding-left: 20px; font-size:15px; line-height: 1.6;">
-            <li>Word Cloud Generation</li>
-            <li>Treemap Chart Creation</li>
-            <li>Frequency-Based Network Analysis</li>
-            <li>LDA Topic Modeling</li>
-            <li>Customer Satisfaction Analysis via Sentiment Analysis</li>
-        </ul>
-        </div>
-        <br>
-        <br>
-        """, unsafe_allow_html=True)
-        st.markdown("""
-        ### ✅ How to Use
-        <div style="padding: 16px; background-color: #f9f9f9; border-radius: 10px; font-size: 15px; line-height: 1.7;">
-            <ol>
-                <li>In the <strong>sidebar</strong>, select a <span style="color:#0d6efd;">region</span> and <span style="color:#0d6efd;">store name</span>, then click the <strong>‘Confirm’</strong> button.</li>
-                <li>Choose the desired analysis function from the <strong>function selection dropdown</strong>.</li>
-                <li>To start a new analysis, <strong>refresh the page</strong> and begin again.</li>
-                <li><strong>Sentiment analysis</strong> may take longer depending on the number of reviews.</li>
-                <li>This tool is designed for <strong>Light Mode</strong>.</li>
-            </ol>
-            <p style="font-size:14px; color:gray;">
-            ⚠️ If you encounter issues, please contact the email address provided in the sidebar.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+# Execute tab-specific functions (mapping bilingual tab names to functions)
+tab_map = {
+    T("How to Use"): render_usage_tab,
+    T("Photos & Reviews"): render_review_tab,
+    T("Word Cloud"): render_wordcloud_tab,
+    T("Treemap"): render_treemap_tab,
+    T("Network Analysis"): render_network_tab,
+    T("Topic Modeling"): render_topic_tab,
+    T("Customer Satisfaction Analysis"): lambda: render_sentiment_dashboard(df, store, get_classifier()),
+}
 
-def render_review_tab(df, store, lang):
-    st.header(f"{T('Photos & Reviews')} - {store}")
-    filtered = df[df["Name"] == store]
-    if filtered.empty:
-        st.info(T("No data to show."))
-    else:
-        for idx, row in filtered.iterrows():
-            st.subheader(f"{T('Photos & Reviews')} #{idx+1}")
-            st.write(row["Content"])
+if selected_tab in tab_map:
+    # Photos & Reviews, Word Cloud, Treemap, Network Analysis, Topic Modeling take df, store
+    if selected_tab in [T("Photos & Reviews"), T("Word Cloud"), T("Treemap"), T("Network Analysis"), T("Topic Modeling")]:
+        tab_map[selected_tab](df, store)
+    elif selected_tab == T("How to Use"):
+        tab_map[selected_tab]()
+    else:  # Sentiment
+        tab_map[selected_tab]()
 
-def render_wordcloud_tab(df, store, lang):
-    st.header(f"{T('Word Cloud')} - {store}")
-    filtered = df[df["Name"] == store]
-    all_tokens = " ".join(filtered["Tokens"].dropna().astype(str))
-    if not all_tokens:
-        st.info(T("No data to show."))
-    else:
-        wc = WordCloud(width=600, height=400, background_color="white").generate(all_tokens)
-        fig, ax = plt.subplots()
-        ax.imshow(wc, interpolation='bilinear')
-        ax.axis("off")
-        st.pyplot(fig)
-
-def render_treemap_tab(df, store, lang):
-    st.header(f"{T('Treemap')} - {store}")
-    filtered = df[df["Name"] == store]
-    all_tokens = " ".join(filtered["Tokens"].dropna().astype(str)).split()
-    if not all_tokens:
-        st.info(T("No data to show."))
-    else:
-        counter = Counter(all_tokens)
-        words, counts = zip(*counter.most_common(10))
-        fig = plt.figure(figsize=(7, 4))
-        squarify.plot(sizes=counts, label=words, alpha=.8)
-        plt.axis('off')
-        st.pyplot(fig)
-
-def render_network_tab(df, store, lang):
-    st.header(f"{T('Network Analysis')} - {store}")
-    filtered = df[df["Name"] == store]
-    all_tokens = [x.split() for x in filtered["Tokens"].dropna().astype(str)]
-    word_pairs = []
-    for tokens in all_tokens:
-       
