@@ -790,96 +790,96 @@ def render_sentiment_dashboard(df, store, classifier):
             return
 
     # Visualize results
-region_name = st.session_state.get('selected_location', '')
-region_stats = region_avg_scores.get(region_name, {})
-sentiment_data = st.session_state[sentiment_key]
+    region_name = st.session_state.get('selected_location', '')
+    region_stats = region_avg_scores.get(region_name, {})
+    sentiment_data = st.session_state[sentiment_key]
 
-# Overall score comparison
-st.subheader(T("🔎 Overall Sentiment Score Comparison"))
+    # Overall score comparison
+    st.subheader(T("🔎 Overall Sentiment Score Comparison"))
 
-store_total = sentiment_data['total']
-region_total = region_stats.get('total', None)
+    store_total = sentiment_data['total']
+    region_total = region_stats.get('total', None)
 
-if region_total is not None:
-    diff = store_total - region_total
-    trend_icon = "▲" if diff > 0 else ("▼" if diff < 0 else "▶")
-    trend_color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
-    trend_text = f"{trend_icon} {abs(diff):.2f} {T('points difference')}"
-else:
-    trend_text = "-"
-    trend_color = "gray"
+    if region_total is not None:
+        diff = store_total - region_total
+        trend_icon = "▲" if diff > 0 else ("▼" if diff < 0 else "▶")
+        trend_color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
+        trend_text = f"{trend_icon} {abs(diff):.2f} {T('points difference')}"
+    else:
+        trend_text = "-"
+        trend_color = "gray"
 
-col1, col2 = st.columns(2)
+    col1, col2 = st.columns(2)
 
-box_style_total = """
-    padding: 20px;
-    border-radius: 15px;
-    background-color: #f5f5f5;
-    text-align: center;
-    box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
-    min-height: 170px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+    box_style_total = """
+        padding: 20px;
+        border-radius: 15px;
+        background-color: #f5f5f5;
+        text-align: center;
+        box-shadow: 0px 1px 4px rgba(0,0,0,0.1);
+        min-height: 170px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
 """
 
-with col1:
-    st.markdown(f"""
-    <div style="{box_style_total}">
-        <div style="font-size:18px; font-weight:bold;">{T("Current Store")}</div>
-        <div style="font-size:36px; font-weight:bold; color:#2b8a3e;">{store_total:.2f}점</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col1:
+        st.markdown(f"""
+        <div style="{box_style_total}">
+            <div style="font-size:18px; font-weight:bold;">{T("Current Store")}</div>
+            <div style="font-size:36px; font-weight:bold; color:#2b8a3e;">{store_total:.2f}점</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-with col2:
-    st.markdown(f"""
-    <div style="{box_style_total}">
-        <div style="font-size:18px; font-weight:bold;">{region_name} {T("Average")}</div>
-        <div style="font-size:36px; font-weight:bold; color:#1c7ed6;">{region_total:.2f}점</div>
-        <div style="font-size:16px; color:{trend_color}; margin-top:5px;">{trend_text}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"""
+        <div style="{box_style_total}">
+            <div style="font-size:18px; font-weight:bold;">{region_name} {T("Average")}</div>
+            <div style="font-size:36px; font-weight:bold; color:#1c7ed6;">{region_total:.2f}점</div>
+            <div style="font-size:16px; color:{trend_color}; margin-top:5px;">{trend_text}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-st.subheader(f"🔎 {T('Keyword Sentiment Score Comparison')}")
-keyword_data = sentiment_data["keywords"]
-cols = st.columns(3)
+    st.subheader(f"🔎 {T('Keyword Sentiment Score Comparison')}")
+    keyword_data = sentiment_data["keywords"]
+    cols = st.columns(3)
 
-for idx, keyword in enumerate(KEYWORD_COLUMNS_EN):
-    with cols[idx % 3]:
-        store_score = keyword_data.get(keyword)
-        region_score = region_stats.get(keyword)
+    for idx, keyword in enumerate(KEYWORD_COLUMNS_EN):
+        with cols[idx % 3]:
+            store_score = keyword_data.get(keyword)
+            region_score = region_stats.get(keyword)
 
-        box_style = """
-            padding: 15px;
-            border-radius: 10px;
-            background-color: whitesmoke;
-            text-align: center;
-            box-shadow: 0px 1px 3px rgba(0,0,0,0.05);
-            min-height: 130px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        """
+            box_style = """
+                padding: 15px;
+                border-radius: 10px;
+                background-color: whitesmoke;
+                text-align: center;
+                box-shadow: 0px 1px 3px rgba(0,0,0,0.05);
+                min-height: 130px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            """
 
-        if store_score is None:
-            st.markdown(f"""
-                <div style="{box_style}">
-                    <div style="font-size:18px; font-weight:bold">{keyword}</div>
-                    <div style="font-size:16px; color:gray; margin-top:12px;">{T('Insufficient reviews for analysis')}</div>
-                </div>
-            """, unsafe_allow_html=True)
-        else:
-            diff = store_score - region_score if region_score else 0
-            trend = "▲" if diff > 0 else ("▼" if diff < 0 else "-")
-            color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
+            if store_score is None:
+                st.markdown(f"""
+                    <div style="{box_style}">
+                        <div style="font-size:18px; font-weight:bold">{keyword}</div>
+                        <div style="font-size:16px; color:gray; margin-top:12px;">{T('Insufficient reviews for analysis')}</div>
+                    </div>
+                """, unsafe_allow_html=True)
+            else:
+                diff = store_score - region_score if region_score else 0
+                trend = "▲" if diff > 0 else ("▼" if diff < 0 else "-")
+                color = "green" if diff > 0 else ("crimson" if diff < 0 else "gray")
 
-            st.markdown(f"""
-                <div style="{box_style}">
-                    <div style="font-size:18px; font-weight:bold">{keyword}</div>
-                    <div style="font-size:28px; color:{color}">{store_score:.2f}{T('Points')} {trend}</div>
-                    <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T('Points')}</div>
-                </div>
-            """, unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="{box_style}">
+                        <div style="font-size:18px; font-weight:bold">{keyword}</div>
+                        <div style="font-size:28px; color:{color}">{store_score:.2f}{T('Points')} {trend}</div>
+                        <div style="font-size:14px; color:gray">{T('Regional Average')}: {region_score:.2f}{T('Points')}</div>
+                    </div>
+                """, unsafe_allow_html=True)
        
 ###############################################
 # UI
