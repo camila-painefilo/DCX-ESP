@@ -128,8 +128,8 @@ TRANSLATIONS = {
         {"English": "Please select a region", "Español": "Selecciona una región"},
     "Please select a store":
         {"English": "Please select a store", "Español": "Selecciona un negocio"},
-    "✅Region/Store Selection Finalized":
-        {"English": "✅Region/Store Selection Finalized", "Español": "✅Región/Negocio Seleccionado"},
+    "✅Region/Store Selected":
+        {"English": "✅Region/Store Selected", "Español": "✅Región/Negocio Seleccionado"},
     "Region":
         {"English": "Region", "Español": "Región"},
     "Store":
