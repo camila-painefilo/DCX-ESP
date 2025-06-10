@@ -170,7 +170,7 @@ TRANSLATIONS = {
     "✅ Please select a feature":
         {"English": "✅ Please select a feature", "Español": "✅ Selecciona una función"},
     "✅Region/Store Selection Finalized":
-        {"English": "✅ Region/Store has been selected", "Español": "✅ Selección de Región/Local Confirmada"},
+        {"English": "✅ Region/Store has been selected", "Español": "✅ Selección de Región/Negocio Confirmada"},
     "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.":
         {"English": "⚠️ Please select the region and store first, then press 'Confirm' to activate the functions.",
          "Español": "⚠️ Selecciona primero la región y el negocio y luego pulsa 'Confirmar' para activar las funciones."},
