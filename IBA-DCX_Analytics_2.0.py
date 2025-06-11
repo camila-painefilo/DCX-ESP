@@ -450,6 +450,13 @@ def render_review_tab(df, store):
             all_links.extend(links)
             all_reviews.extend([reviews[idx]] * len(links))
 
+    # DEMO: Translate displayed reviews if not Korean UI
+    # (You can choose 'en' for English, 'es' for Spanish)
+    googletrans_langs = {"English": "en", "Español": "es"}
+    display_reviews = all_reviews
+    if lang in googletrans_langs and lang != "한국어":  # if not Korean UI
+        display_reviews = translate_texts(all_reviews, googletrans_langs[lang])
+
     avg_length = np.mean([len(r) for r in reviews if isinstance(r, str)]) if reviews else 0
     st.markdown(f"### 📊 {T('Review Indicators')}")
     col1, col2, col3 = st.columns(3)
@@ -459,11 +466,6 @@ def render_review_tab(df, store):
         st.metric(T("Total number of Images"), f"{len(all_links)} images")
     with col3:
         st.metric(T("Average Review Length"), f"{avg_length:.1f}")
-    highlight_keywords = KEYWORD_COLUMNS_EN
-    def highlight_keywords_in_text(text):
-        for kw in highlight_keywords:
-            text = re.sub(f"({kw})", r"<span style='color:#d9480f; font-weight:bold;'>\1</span>", text)
-        return text
 
     st.markdown(f"### {T('Top Reviews 🖼️')}")
     NUM_CARDS = 6
@@ -484,7 +486,8 @@ def render_review_tab(df, store):
                 </div>
                 """, unsafe_allow_html=True)
 
-                highlighted = highlight_keywords_in_text(all_reviews[idx])
+                # Show the translated review
+                highlighted = display_reviews[idx]
                 st.markdown(f"""
                 <div style="padding:12px; background-color:#f9f9f9; border-radius:10px;
                             box-shadow:0 2px 4px rgba(0,0,0,0.08); margin-top:8px;
