@@ -78,9 +78,9 @@ TRANSLATIONS = {
         {"English": "Total number of Reviews", "Español": "Total de Reseñas"},
     "Total number of Images":
         {"English": "Total number of Images", "Español": "Total de Fotos"},
-    "Images":
+    "images":
         {"English": "Images", "Español": "Fotos"},
-    "Reviews":
+    "reviews":
         {"English": "Reviews", "Español": "Reseñas"},
     "Average Review Length":
         {"English": "Average Review Length", "Español": "Longitud Promedio de Reseña"},
