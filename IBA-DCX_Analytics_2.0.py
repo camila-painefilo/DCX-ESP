@@ -71,13 +71,17 @@ TRANSLATIONS = {
         {"English": "📊 IBA-DCX Tool", "Español": "📊 Herramienta IBA-DCX"},
     "How to Use": {"English": "How to Use", "Español": "Cómo usar"},
      "Review Summary and Images":
-        {"English": "Review Summary and Images", "Español": "Resumen de Reseñas e Imágenes"},
+        {"English": "Review Summary and Images", "Español": "Resumen de Reseñas y Fotos"},
     "Review Indicators":
         {"English": "Review Indicators", "Español": "Indicadores de Reseñas"},
     "Total number of Reviews":
         {"English": "Total number of Reviews", "Español": "Total de Reseñas"},
     "Total number of Images":
-        {"English": "Total number of Images", "Español": "Total de Imágenes"},
+        {"English": "Total number of Images", "Español": "Total de Fotos"},
+    "Images":
+        {"English": "Images", "Español": "Fotos"},
+    "Reviews":
+        {"English": "Reviews", "Español": "Reseñas"},
     "Average Review Length":
         {"English": "Average Review Length", "Español": "Longitud Promedio de Reseña"},
     "Top Reviews 🖼️":
