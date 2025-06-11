@@ -17,3 +17,4 @@ google-auth==2.35.0
 google-auth-oauthlib==1.2.1
 transformers==4.45.2
 tokenizers==0.20.3
+googletrans==4.0.0-rc1
