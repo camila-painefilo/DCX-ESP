@@ -30,6 +30,26 @@ import gspread
 from random import choice
 from google.oauth2.service_account import Credentials
 
+#---GOOGLETRANS API TRY----
+try:
+    from googletrans import Translator
+except ImportError:
+    Translator = None
+
+def translate_texts(texts, target_lang):
+    if Translator is None:
+        return texts  # Fallback: show originals if package missing
+    translator = Translator()
+    translated = []
+    for text in texts:
+        try:
+            t = translator.translate(text, dest=target_lang).text
+            translated.append(t)
+        except Exception:
+            translated.append(text)
+    return translated
+
+
 # --- Bilingual UI Setup ---
 lang = st.sidebar.selectbox("🌐 Language / Idioma", ["English", "Español"], key="lang")
 
