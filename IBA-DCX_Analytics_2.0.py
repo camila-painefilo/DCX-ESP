@@ -323,7 +323,7 @@ stopwords = {
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves',
     'you', 'your', 'yours', 'yourself', 'yourselves',
     'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself',
-    'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves',
+    'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves','it','s','I','The'
 
     # 🔹 Question and demonstrative words
     'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
@@ -341,7 +341,7 @@ stopwords = {
     # 🔹 Prepositions
     'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between',
     'into', 'through', 'during', 'before', 'after',
-    'above', 'below', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under',
+    'above', 'below', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under', 'there'
 
     # 🔹 Conjunctions
     'and', 'but', 'or', 'yet', 'so', 'because', 'although', 'if', 'though', 'while', 'as',
@@ -360,7 +360,17 @@ stopwords = {
     'say', 'said', 'see', 'seen', 'thing', 'stuff', 'use',
 
     # 🔹 Review-specific filler (optional additions)
-    'like', 'lot', 'bit', 'way', 'kind', 'also', 'one'
+    'like', 'lot', 'bit', 'way', 'kind', 'also', 'one',
+
+    # 🔹 Emojis (frequently seen in reviews and captions)
+    '😊', '😍', '🥰', '😘', '😎', '🤩', '😁', '😂', '🤣', '😅', '😆',
+    '👍', '👏', '🙌', '🙏', '💯', '🔥', '🌟', '✨', '🌈', '❤️', '💖', '💕',
+    '😭', '😢', '😞', '😔', '😩', '🥺', '😤', '😡', '😠',
+    '🎉', '🎊', '🥳', '🍽️', '🍕', '🍔', '🍜', '🍣', '🍦', '☕', '🍺', '🍷',
+    '📸', '📍', '📷', '🏞️', '🗺️', '🧳', '✈️', '🏨', '🚌', '🚉',
+
+    #Other expressions
+    '!!'
 }
 
 ###############################################
