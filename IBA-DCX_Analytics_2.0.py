@@ -244,9 +244,7 @@ plt.rcParams['axes.unicode_minus'] = False
 TIMEZONE = pytz.timezone('Asia/Seoul')
 
 # Dataset mapping
-KEYWORD_COLUMNS_KO = ['맛', '서비스', '가격', '위치', '분위기', '위생']
 KEYWORD_COLUMNS_EN = ['Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Hygiene']
-KEYWORD_ENGLISH_MAP = dict(zip(KEYWORD_COLUMNS_KO, KEYWORD_COLUMNS_EN))
 DATASET_MAP = {
     'Pusan National University': 'IBA-DCX_Analytics_2.0_PNU.csv',
     'Kyung Hee University': 'IBA-DCX_Analytics_2.0_KHU.csv',
@@ -265,7 +263,7 @@ LOCATION_ENGLISH_MAP = {
 
 @st.cache_resource
 def get_classifier():
-    return pipeline("sentiment-analysis", model="matthewburke/korean_sentiment")
+    return pipeline("sentiment-analysis", model="distilbert-base-uncased-finetuned-sst-2-english")
 
 @st.cache_data
 def load_dataset(dataset_name: str) -> pd.DataFrame:
@@ -279,10 +277,8 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
     output = f".cache_{dataset_name}"
     if not os.path.exists(output):
         gdown.download(f'https://drive.google.com/uc?id={file_id}', output, quiet=True)
-    use_cols = ['Name', 'Content', 'Tokens', 'Image_Links'] + KEYWORD_COLUMNS_KO + ['review_sentences', 'Date']
+    use_cols = ['Name_EN', 'Content_EN', 'Tokens_EN', 'Image_Links'] + KEYWORD_COLUMNS_EN + ['review_sentences_EN', 'Date']
     df = pd.read_csv(output, usecols=use_cols)
-    # Rename Korean columns to English
-    df = df.rename(columns=KEYWORD_ENGLISH_MAP)
     return df
 
 @st.cache_resource
