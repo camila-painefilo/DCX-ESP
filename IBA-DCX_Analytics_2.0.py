@@ -323,7 +323,7 @@ stopwords = {
     'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves',
     'you', 'your', 'yours', 'yourself', 'yourselves',
     'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself',
-    'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves','it','s','I','The',
+    'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves','it','s','I','The',"it's",
 
     # 🔹 Question and demonstrative words
     'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
