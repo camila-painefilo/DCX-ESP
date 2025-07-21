@@ -362,7 +362,6 @@ stopwords = {
     # 🔹 Review-specific filler (optional additions)
     'like', 'lot', 'bit', 'way', 'kind', 'also', 'one'
 }
-}
 
 ###############################################
 # Modules
