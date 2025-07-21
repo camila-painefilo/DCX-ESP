@@ -194,7 +194,7 @@ region_avg_scores = {
         'Price': 87.02,
         'Location': 81.43,
         'Atmosphere': 88.63,
-        'Hygiene': 89.17
+        'Cleanliness': 89.17
     },
     'Kyung Hee University': {
         'total': 88.87,
@@ -203,7 +203,7 @@ region_avg_scores = {
         'Price': 86.01,
         'Location': 78.23,
         'Atmosphere': 85.76,
-        'Hygiene': 89.53
+        'Cleanliness': 89.53
     },
     'Jeju Island': {
         'total': 88.53,
@@ -212,7 +212,7 @@ region_avg_scores = {
         'Price': 81.22,
         'Location': 81.47,
         'Atmosphere': 85.09,
-        'Hygiene': 89.87
+        'Cleanliness': 89.87
     }
 }
 
@@ -244,7 +244,7 @@ plt.rcParams['axes.unicode_minus'] = False
 TIMEZONE = pytz.timezone('Asia/Seoul')
 
 # Dataset mapping
-KEYWORD_COLUMNS_EN = ['Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Hygiene']
+KEYWORD_COLUMNS_EN = ['Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Cleanliness']
 DATASET_MAP = {
     'Pusan National University': 'IBA-DCX_Analytics_2.0_PNU.csv',
     'Kyung Hee University': 'IBA-DCX_Analytics_2.0_KHU.csv',
@@ -277,7 +277,9 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
     output = f".cache_{dataset_name}"
     if not os.path.exists(output):
         gdown.download(f'https://drive.google.com/uc?id={file_id}', output, quiet=True)
-    use_cols = ['Name_EN', 'Content_EN', 'Tokens_EN', 'Image_Links'] + KEYWORD_COLUMNS_EN + ['review_sentences_EN', 'Date']
+    use_cols = ['Name', 'Content', 'Tokens', 'Image_Links',
+            'Taste', 'Service', 'Price', 'Location', 'Atmosphere', 'Cleanliness',
+            'review_sentences', 'Date']
     df = pd.read_csv(output, usecols=use_cols)
     return df
 
