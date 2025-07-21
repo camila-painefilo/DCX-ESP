@@ -30,24 +30,6 @@ import gspread
 from random import choice
 from google.oauth2.service_account import Credentials
 
-#---GOOGLETRANS API TRY----
-try:
-    from googletrans import Translator
-except ImportError:
-    Translator = None
-
-def translate_texts(texts, target_lang):
-    if Translator is None:
-        return texts  # Fallback: show originals if package missing
-    translator = Translator()
-    translated = []
-    for text in texts:
-        try:
-            t = translator.translate(text, dest=target_lang).text
-            translated.append(t)
-        except Exception:
-            translated.append(text)
-    return translated
 
 
 # --- Bilingual UI Setup ---
@@ -454,12 +436,7 @@ def render_review_tab(df, store):
             all_links.extend(links)
             all_reviews.extend([reviews[idx]] * len(links))
 
-    # DEMO: Translate displayed reviews if not Korean UI
-    # (You can choose 'en' for English, 'es' for Spanish)
-    googletrans_langs = {"English": "en", "Español": "es"}
     display_reviews = all_reviews
-    if lang in googletrans_langs and lang != "한국어":  # if not Korean UI
-        display_reviews = translate_texts(all_reviews, googletrans_langs[lang])
 
     avg_length = np.mean([len(r) for r in reviews if isinstance(r, str)]) if reviews else 0
     st.markdown(f"### 📊 {T('Review Indicators')}")
