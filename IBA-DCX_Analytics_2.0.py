@@ -341,7 +341,7 @@ stopwords = {
     # 🔹 Prepositions
     'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between',
     'into', 'through', 'during', 'before', 'after',
-    'above', 'below', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under', 'there'
+    'above', 'below', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under', 'there',
 
     # 🔹 Conjunctions
     'and', 'but', 'or', 'yet', 'so', 'because', 'although', 'if', 'though', 'while', 'as',
