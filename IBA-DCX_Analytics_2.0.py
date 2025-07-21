@@ -319,27 +319,49 @@ def clean_tokens(text):
 
 # Stopwords definition (unchanged)
 stopwords = {
-    # Particles / Pronouns / Demonstratives
-    '이', '그', '저', '것', '거', '곳', '수', '좀', '처럼', '까지', '에도', '에도요', '이나', '라도',
+    # 🔹 Pronouns and personal references
+    'i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves',
+    'you', 'your', 'yours', 'yourself', 'yourselves',
+    'he', 'him', 'his', 'himself', 'she', 'her', 'hers', 'herself',
+    'it', 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves',
 
-    # Conjunctions / Connectors
-    '그리고', '그래서', '그러나', '하지만', '또한', '즉', '결국', '때문에', '그래도',
+    # 🔹 Question and demonstrative words
+    'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those',
+    'where', 'when', 'why', 'how',
 
-    # Predicates / Endings / Auxiliary verbs
-    '합니다', '해요', '했어요', '하네요', '하시네요', '하시던데요', '같아요', '있어요', '없어요',
-    '되네요', '되었어요', '보여요', '느껴져요', '하겠습니다', '되겠습니다', '있습니다', '없습니다',
-    '합니다', '이에요', '이라', '해서',
+    # 🔹 Auxiliary and modal verbs
+    'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'have', 'has', 'had', 'having',
+    'do', 'does', 'did', 'doing',
+    'can', 'could', 'should', 'would', 'may', 'might', 'must', 'shall', 'will',
 
-    # Interjections / Review-specific expressions
-    'ㅎㅎ', 'ㅋㅋ', 'ㅠㅠ', '^^', '^^;;', '~', '~~', '!!!', '??', '!?', '?!', '...', '!!', '~!!', '~^^!!',
+    # 🔹 Articles and determiners
+    'a', 'an', 'the', 'any', 'each', 'every', 'few', 'some', 'most', 'many', 'several', 'no',
 
-    # Emphasis expressions
-    '아주', '정말', '진짜', '엄청', '매우', '완전', '너무', '굉장히', '많이', '많아요', '적당히', '넘',
+    # 🔹 Prepositions
+    'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between',
+    'into', 'through', 'during', 'before', 'after',
+    'above', 'below', 'to', 'from', 'in', 'out', 'on', 'off', 'over', 'under',
 
-    # Others
-    '정도', '느낌', '같은', '니당', '네요', '있네요', '이네요', '이라서',
-    '해서요', '보니까', '봤어요', '먹었어요', '마셨어요', '갔어요', '봤습니다', '하는', '하게', '드네', '또시',
-    '이랑', '하고', '해도', '해도요', '때문에요', '이나요', '정도에요'
+    # 🔹 Conjunctions
+    'and', 'but', 'or', 'yet', 'so', 'because', 'although', 'if', 'though', 'while', 'as',
+
+    # 🔹 Adverbs of degree and emphasis
+    'very', 'really', 'just', 'too', 'quite', 'such', 'only', 'almost', 'even', 'ever',
+
+    # 🔹 Negations and restrictions
+    'not', 'no', 'nor', 'neither', 'without',
+
+    # 🔹 Time and sequence
+    'once', 'then', 'again', 'now', 'still', 'already', 'soon', 'later', 'always',
+
+    # 🔹 Filler / general-purpose / common verbs
+    'get', 'got', 'make', 'made', 'take', 'took', 'go', 'went', 'come', 'came',
+    'say', 'said', 'see', 'seen', 'thing', 'stuff', 'use',
+
+    # 🔹 Review-specific filler (optional additions)
+    'like', 'lot', 'bit', 'way', 'kind', 'also', 'one'
+}
 }
 
 ###############################################
