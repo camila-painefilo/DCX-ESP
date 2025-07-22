@@ -527,8 +527,13 @@ def render_wordcloud_tab(df, store):
 
     for idx, column in enumerate(columns_to_plot):
         col = cols[idx % 3]
-        text = ' '.join(df_store[column].dropna().map(str))
-        tokens = text.split()
+        
+        if column == 'Content':
+           tokens = list(itertools.chain(*df_store['Tokens']))
+        else:
+           text = ' '.join(df_store[column].dropna().map(str))
+           tokens = text.split()
+           
         filtered_tokens = [t for t in tokens if t not in stopwords]
         filtered_text = ' '.join(filtered_tokens)
         st.write(f"{column}: {len(filtered_tokens)} tokens ➜ {'✅' if filtered_text.strip() else '❌'}")
