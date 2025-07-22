@@ -300,7 +300,7 @@ def compute_sentiment(text, classifier):
     if not isinstance(text, str):
         text = str(text)
     result = classifier(text)
-    return result[0]['score'] if result[0]['label'] == 'LABEL_1' else 1 - result[0]['score']
+    return result[0]['score'] if result[0]['label'] in ['LABEL_1', 'POSITIVE'] else 1 - result[0]['score']
 
 def render_title(location, store):
     st.title(f"{location} - {store}")
