@@ -1068,7 +1068,7 @@ else:
 tab_map = {
     T("How to Use"): render_usage_tab,
     T("Photos & Reviews"): render_review_tab,
-    T("Word Cloud"): render_wordcloud_tab,
+    T("WordCloud"): render_wordcloud_tab,
     T("Treemap"): render_treemap_tab,
     T("Network Analysis"): render_network_tab,
     T("Topic Modeling"): render_topic_tab,
@@ -1077,7 +1077,7 @@ tab_map = {
 
 if selected_tab in tab_map:
     # Photos & Reviews, Word Cloud, Treemap, Network Analysis, Topic Modeling take df, store
-    if selected_tab in [T("Photos & Reviews"), T("Word Cloud"), T("Treemap"), T("Network Analysis"), T("Topic Modeling")]:
+    if selected_tab in [T("Photos & Reviews"), T("WordCloud"), T("Treemap"), T("Network Analysis"), T("Topic Modeling")]:
         tab_map[selected_tab](df, store)
     elif selected_tab == T("How to Use"):
         tab_map[selected_tab]()
