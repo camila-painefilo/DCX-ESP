@@ -270,7 +270,7 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
     import gdown
     file_ids = {
         'IBA-DCX_Analytics_2.0_PNU.csv': '1Pvmbu1XlGxgmZHZfTaSkqXxkmwaZ_uN2',
-        'IBA-DCX_Analytics_2.0_KHU.csv': '1pqbNRLg8SdsmnZgi9JnqkxjDp7VUPlb4',
+        'IBA-DCX_Analytics_2.0_KHU.csv': '1oEQyjZP5uzZ4zvKncq9dNMowwnCodQ8H',
         'IBA-DCX_Analytics_2.0_Jeju.csv': '1OeB_VE4bWYCLFAI85ozT7DwiL8V1W7yR'
     }
     file_id = file_ids.get(dataset_name)
