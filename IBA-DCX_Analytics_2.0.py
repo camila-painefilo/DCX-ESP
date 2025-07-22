@@ -758,7 +758,7 @@ def render_sentiment_dashboard(df, store, classifier):
             'Price': 87.02,
             'Location': 81.43,
             'Atmosphere': 88.63,
-            'Hygiene': 89.17
+            'Cleanliness': 89.17
         },
         'Kyung Hee University': {
             'total': 88.87,
@@ -767,7 +767,7 @@ def render_sentiment_dashboard(df, store, classifier):
             'Price': 86.01,
             'Location': 78.23,
             'Atmosphere': 85.76,
-            'Hygiene': 89.53
+            'Cleanliness': 89.53
         },
         'Jeju Island': {
             'total': 88.53,
@@ -776,7 +776,7 @@ def render_sentiment_dashboard(df, store, classifier):
             'Price': 81.22,
             'Location': 81.47,
             'Atmosphere': 85.09,
-            'Hygiene': 89.87
+            'Cleanliness': 89.87
         }
     }
     st.header(f"{LOCATION_ENGLISH_MAP.get(st.session_state.get('selected_location', ''))} - {store}: {T('Customer Satisfaction Analysis')}")
