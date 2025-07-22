@@ -536,7 +536,7 @@ def render_wordcloud_tab(df, store):
            
         filtered_tokens = [t for t in tokens if t not in stopwords]
         filtered_text = ' '.join(filtered_tokens)
-        st.write(f"{column}: {len(filtered_tokens)} tokens ➜ {'✅' if filtered_text.strip() else '❌'}")
+        
 
         with col:
             st.markdown(
