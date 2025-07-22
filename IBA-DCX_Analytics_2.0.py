@@ -799,7 +799,7 @@ def render_sentiment_dashboard(df, store, classifier):
             total_scores = []
             for text in texts:
                 result = classifier(text)[0]
-                score = result['score'] if result['label'] == 'LABEL_1' else 1 - result['score']
+                score = result['score'] if result['label'] in ['LABEL_1', 'POSITIVE'] else 1 - result['score']
                 total_scores.append(score)
                 completed_steps += 1
                 progress_bar.progress(completed_steps / total_steps)
@@ -810,7 +810,7 @@ def render_sentiment_dashboard(df, store, classifier):
                     scores = []
                     for text in col_texts:
                         result = classifier(text)[0]
-                        score = result['score'] if result['label'] == 'LABEL_1' else 1 - result['score']
+                        score = result['score'] if result['label'] in ['LABEL_1', 'POSITIVE'] else 1 - result['score']
                         scores.append(score)
                         completed_steps += 1
                         progress_bar.progress(completed_steps / total_steps)
